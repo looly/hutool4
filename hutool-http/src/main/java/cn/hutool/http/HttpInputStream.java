@@ -1,13 +1,13 @@
 package cn.hutool.http;
 
+import cn.hutool.core.util.StrUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
-
-import cn.hutool.core.util.StrUtil;
+import java.util.zip.InflaterInputStream;
 
 /**
  * HTTP输入流，此流用于包装Http请求响应内容的流，用于解析各种压缩、分段的响应流内容
@@ -18,7 +18,7 @@ import cn.hutool.core.util.StrUtil;
 public class HttpInputStream extends InputStream {
 
 	/** 原始流 */
-	private volatile InputStream in;
+	private InputStream in;
 
 	/**
 	 * 构造
@@ -91,10 +91,6 @@ public class HttpInputStream extends InputStream {
 			return;
 		}
 		
-		// TODO 分段响应内容解析
-		if(response.isChunked()) {
-		}
-
 		if (response.isGzip() && false == (response.in instanceof GZIPInputStream)) {
 			// Accept-Encoding: gzip
 			try {
@@ -103,9 +99,9 @@ public class HttpInputStream extends InputStream {
 				// 在类似于Head等方法中无body返回，此时GZIPInputStream构造会出现错误，在此忽略此错误读取普通数据
 				// ignore
 			}
-		} else if (response.isDeflate() && false == (this.in instanceof DeflaterInputStream)) {
+		} else if (response.isDeflate() && false == (this.in instanceof InflaterInputStream)) {
 			// Accept-Encoding: defalte
-			this.in = new DeflaterInputStream(this.in);
+			this.in = new InflaterInputStream(this.in);
 		}
 	}
 }
