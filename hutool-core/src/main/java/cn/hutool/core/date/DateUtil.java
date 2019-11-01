@@ -384,7 +384,7 @@ public class DateUtil {
 	}
 
 	/**
-	 * @return 当前日期所在年份的第几周
+	 * @return 当前日期所在月份的第几周
 	 */
 	public static int thisWeekOfMonth() {
 		return weekOfMonth(date());
