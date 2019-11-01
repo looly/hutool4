@@ -9,6 +9,7 @@
 ### Bug修复
 * 【core】       解决ConcurrentHashSet不能序列化的问题（issue#600@Github）
 * 【core】       解决CsvReader.setErrorOnDifferentFieldCount循环调用问题
+* 【db】         修复MetaUtil.getTableMeta()方法未释放ResultSet的bug（issue#I148GH@Gitee）
 
 -------------------------------------------------------------------------------------------------------------
 
