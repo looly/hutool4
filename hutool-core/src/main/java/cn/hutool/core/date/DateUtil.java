@@ -1671,17 +1671,19 @@ public class DateUtil {
 			throw new IllegalArgumentException(StrUtil.format("Birthday is after date {}!", formatDate(dateToCompare)));
 		}
 
-		int year = cal.get(Calendar.YEAR);
-		int month = cal.get(Calendar.MONTH);
-		int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
+		final int year = cal.get(Calendar.YEAR);
+		final int month = cal.get(Calendar.MONTH);
+		final int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
+		final boolean isLastDayOfMonth = dayOfMonth == cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
 		cal.setTime(birthDay);
 		int age = year - cal.get(Calendar.YEAR);
 
-		int monthBirth = cal.get(Calendar.MONTH);
+		final int monthBirth = cal.get(Calendar.MONTH);
 		if (month == monthBirth) {
-			int dayOfMonthBirth = cal.get(Calendar.DAY_OF_MONTH);
-			if (dayOfMonth < dayOfMonthBirth) {
+			final int dayOfMonthBirth = cal.get(Calendar.DAY_OF_MONTH);
+			final boolean isLastDayOfMonthBirth = dayOfMonthBirth == cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+			if ((false == isLastDayOfMonth || false == isLastDayOfMonthBirth) && dayOfMonth < dayOfMonthBirth) {
 				// 如果生日在当月，但是未达到生日当天的日期，年龄减一
 				age--;
 			}

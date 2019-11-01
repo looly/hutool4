@@ -2,12 +2,17 @@ package cn.hutool.core.date;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.BetweenFormater.Level;
-import cn.hutool.core.lang.Console;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.TimeZone;
 
 /**
  * 时间工具单元测试<br>
@@ -583,5 +588,13 @@ public class DateUtilTest {
 	public void formatHttpDateTest() {
 		String formatHttpDate = DateUtil.formatHttpDate(DateUtil.parse("2019-01-02 22:32:01"));
 		Assert.assertEquals("Wed, 02 Jan 2019 14:32:01 GMT", formatHttpDate);
+	}
+
+	@Test
+	public void ageTest(){
+		String d1 = "2000-02-29";
+		String d2 = "2018-02-28";
+		final int age = DateUtil.age(DateUtil.parseDate(d1), DateUtil.parseDate(d2));
+		Assert.assertEquals(18, age);
 	}
 }
