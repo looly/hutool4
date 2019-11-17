@@ -1063,13 +1063,21 @@ public class ZipUtil {
 	 * @param outFile 最外部路径
 	 * @param fileName 文件名，可以包含路径
 	 * @return 文件或目录
-	 * @since 5.0.5
+	 * @since 4.6.13
 	 */
 	private static File buildFile(File outFile, String fileName){
-		if(false == FileUtil.isWindows() && StrUtil.contains(fileName, CharUtil.SLASH)) {
+		if (false == FileUtil.isWindows() && StrUtil.contains(fileName, CharUtil.SLASH)) {
 			// 在Linux下多层目录创建存在问题，/会被当成文件名的一部分，此处做处理
+			// 使用/拆分路径（zip中无\），级联创建父目录
 			final String[] pathParts = StrUtil.splitToArray(fileName, CharUtil.SLASH);
-			return FileUtil.file(pathParts);
+			for (int i = 0; i < pathParts.length - 1; i++) {
+				//由于路径拆分，slip不检查，在最后一步检查
+				outFile = new File(outFile, pathParts[i]);
+			}
+			//noinspection ResultOfMethodCallIgnored
+			outFile.mkdirs();
+			// 最后一个部分作为文件名
+			fileName = pathParts[pathParts.length -1];
 		}
 		return FileUtil.file(outFile, fileName);
 	}

@@ -763,6 +763,16 @@ public class DateTime extends Date {
 	}
 
 	/**
+	 * 获取时区
+	 *
+	 * @return 时区
+	 * @since 4.6.13
+	 */
+	public TimeZone getTimeZone(){
+		return this.timeZone;
+	}
+
+	/**
 	 * 设置时区
 	 *
 	 * @param timeZone 时区

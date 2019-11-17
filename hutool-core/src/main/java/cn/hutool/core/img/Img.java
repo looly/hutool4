@@ -277,15 +277,15 @@ public class Img implements Serializable {
 		int srcWidth = srcImage.getWidth(null);
 		double heightRatio = NumberUtil.div(height, srcHeight);
 		double widthRatio = NumberUtil.div(width, srcWidth);
-		if (heightRatio == widthRatio) {
-			// 长宽都按照相同比例缩放时，返回缩放后的图片
-			return scale(width, height);
-		}
 
-		// 宽缩放比例多就按照宽缩放，否则按照高缩放
-		if (widthRatio < heightRatio) {
+		if (widthRatio == heightRatio) {
+			// 长宽都按照相同比例缩放时，返回缩放后的图片
+			scale(width, height);
+		} else if (widthRatio < heightRatio) {
+			// 宽缩放比例多就按照宽缩放
 			scale(width, (int) (srcHeight * widthRatio));
 		} else {
+			// 否则按照高缩放
 			scale((int) (srcWidth * heightRatio), height);
 		}
 
