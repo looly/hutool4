@@ -65,7 +65,7 @@ public class TextSimilarity {
 		char c;
 		for (int i = 0; i < length; i++) {
 			c = str.charAt(i);
-			if(false == isInvalidChar(c)) {
+			if(false == isValidChar(c)) {
 				sb.append(c);
 			}
 		}
@@ -79,7 +79,7 @@ public class TextSimilarity {
 	 * @param charValue 字符
 	 * @return true表示为非汉字，数字和字母，false反之
 	 */
-	private static boolean isInvalidChar(char charValue) {
+	private static boolean isValidChar(char charValue) {
 		return (charValue >= 0x4E00 && charValue <= 0XFFF) || //
 				(charValue >= 'a' && charValue <= 'z') || //
 				(charValue >= 'A' && charValue <= 'Z') || //

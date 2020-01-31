@@ -5,8 +5,16 @@
 
 ## 4.6.14
 
-### 新特性
 ### Bug修复
+* 【core 】     修复TextSimilarity.similar去除字符导致的问题（issue#I17K2A@Gitee）
+* 【core 】     修复unzip文件路径问题（issue#I17VU7@Gitee）
+* 【db】        修复findLike匹配错误问题
+* 【extra】     修复SFTP.upload上传失败的问题（issue#I15O40@Gitee）
+* 【core】      修复DateConvert对int不支持导致的问题（issue#677@Github）
+* 【db  】      修复SqlExecutor.callQuery关闭Statement导致的问题（issue#I16981@Gitee）
+* 【db  】      修复XmlUtil.xmlToMap中List节点的问题（pr#82@Gitee）
+* 【core】      修复ZipUtil中对于/结尾路径处理的问题（issue#I16PKP@Gitee）
+* 【core 】     修复FileUtil.listFileNames位于jar内导致的文件找不到问题  
 
 -------------------------------------------------------------------------------------------------------------
 

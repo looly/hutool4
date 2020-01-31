@@ -64,9 +64,9 @@ public class DateConverter extends AbstractConverter<java.util.Date> {
 		if (value instanceof Calendar) {
 			// Handle Calendar
 			mills = ((Calendar) value).getTimeInMillis();
-		} else if (value instanceof Long) {
-			// Handle Long
-			mills = (Long) value;
+		} else if (value instanceof Number) {
+			// Handle Number
+			mills = ((Number) value).longValue();
 		} else {
 			// 统一按照字符串处理
 			final String valueStr = convertToStr(value);

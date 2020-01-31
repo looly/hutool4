@@ -1,48 +1,36 @@
 package cn.hutool.core.util;
 
-import java.beans.XMLDecoder;
-import java.beans.XMLEncoder;
-import java.io.BufferedInputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.exceptions.UtilException;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.map.MapUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import cn.hutool.core.exceptions.UtilException;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.lang.Assert;
+import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.beans.XMLDecoder;
+import java.beans.XMLEncoder;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * XML工具类<br>
@@ -56,11 +44,23 @@ public class XmlUtil {
 	/**
 	 * 在XML中无效的字符 正则
 	 */
-	public final static String INVALID_REGEX = "[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f]";
+	public static final String INVALID_REGEX = "[\\x00-\\x08\\x0b-\\x0c\\x0e-\\x1f]";
 	/**
 	 * XML格式化输出默认缩进量
 	 */
-	public final static int INDENT_DEFAULT = 2;
+	public static final int INDENT_DEFAULT = 2;
+
+	/**
+	 * 默认的DocumentBuilderFactory实现
+	 */
+	private static String defaultDocumentBuilderFactory = "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl";
+
+	/**
+	 * 禁用默认的DocumentBuilderFactory，禁用后如果有第三方的实现（如oracle的xdb包中的xmlparse），将会自动加载实现。
+	 */
+	synchronized public static void disableDefaultDocumentBuilderFactory() {
+		defaultDocumentBuilderFactory = null;
+	}
 
 	// -------------------------------------------------------------------------------------- Read
 
@@ -248,9 +248,24 @@ public class XmlUtil {
 	 * @since 3.0.9
 	 */
 	public static String toStr(Document doc, String charset, boolean isPretty) {
+		return toStr(doc, charset, isPretty,false);
+	}
+
+	/**
+	 * 将XML文档转换为String<br>
+	 * 字符编码使用XML文档中的编码，获取不到则使用UTF-8
+	 *
+	 * @param doc                XML文档
+	 * @param charset            编码
+	 * @param isPretty           是否格式化输出
+	 * @param omitXmlDeclaration 是否输出 xml Declaration
+	 * @return XML字符串
+	 * @since 5.1.2
+	 */
+	public static String toStr(Document doc, String charset, boolean isPretty, boolean omitXmlDeclaration) {
 		final StringWriter writer = StrUtil.getWriter();
 		try {
-			write(doc, writer, charset, isPretty ? INDENT_DEFAULT : 0);
+			write(doc, writer, charset, isPretty ? INDENT_DEFAULT : 0, omitXmlDeclaration);
 		} catch (Exception e) {
 			throw new UtilException(e, "Trans xml document to string error!");
 		}
@@ -330,6 +345,20 @@ public class XmlUtil {
 	/**
 	 * 将XML文档写出
 	 *
+	 * @param node               {@link Node} XML文档节点或文档本身
+	 * @param writer             写出的Writer，Writer决定了输出XML的编码
+	 * @param charset            编码
+	 * @param indent             格式化输出中缩进量，小于1表示不格式化输出
+	 * @param omitXmlDeclaration 是否输出 xml Declaration
+	 * @since 5.1.2
+	 */
+	public static void write(Node node, Writer writer, String charset, int indent, boolean omitXmlDeclaration) {
+		transform(new DOMSource(node), new StreamResult(writer), charset, indent, omitXmlDeclaration);
+	}
+
+	/**
+	 * 将XML文档写出
+	 *
 	 * @param node    {@link Node} XML文档节点或文档本身
 	 * @param out     写出的Writer，Writer决定了输出XML的编码
 	 * @param charset 编码
@@ -338,6 +367,20 @@ public class XmlUtil {
 	 */
 	public static void write(Node node, OutputStream out, String charset, int indent) {
 		transform(new DOMSource(node), new StreamResult(out), charset, indent);
+	}
+
+	/**
+	 * 将XML文档写出
+	 *
+	 * @param node               {@link Node} XML文档节点或文档本身
+	 * @param out                写出的Writer，Writer决定了输出XML的编码
+	 * @param charset            编码
+	 * @param indent             格式化输出中缩进量，小于1表示不格式化输出
+	 * @param omitXmlDeclaration 是否输出 xml Declaration
+	 * @since 5.1.2
+	 */
+	public static void write(Node node, OutputStream out, String charset, int indent, boolean omitXmlDeclaration) {
+		transform(new DOMSource(node), new StreamResult(out), charset, indent, omitXmlDeclaration);
 	}
 
 	/**
@@ -351,6 +394,21 @@ public class XmlUtil {
 	 * @since 4.0.9
 	 */
 	public static void transform(Source source, Result result, String charset, int indent) {
+		transform(source, result, charset, indent, false);
+	}
+
+	/**
+	 * 将XML文档写出<br>
+	 * 格式化输出逻辑参考：https://stackoverflow.com/questions/139076/how-to-pretty-print-xml-from-java
+	 *
+	 * @param source             源
+	 * @param result             目标
+	 * @param charset            编码
+	 * @param indent             格式化输出中缩进量，小于1表示不格式化输出
+	 * @param omitXmlDeclaration 是否输出 xml Declaration
+	 * @since 5.1.2
+	 */
+	public static void transform(Source source, Result result, String charset, int indent,boolean omitXmlDeclaration) {
 		final TransformerFactory factory = TransformerFactory.newInstance();
 		try {
 			final Transformer xformer = factory.newTransformer();
@@ -360,6 +418,9 @@ public class XmlUtil {
 			}
 			if (StrUtil.isNotBlank(charset)) {
 				xformer.setOutputProperty(OutputKeys.ENCODING, charset);
+			}
+			if (omitXmlDeclaration){
+				xformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 			}
 			xformer.transform(source, result);
 		} catch (Exception e) {
@@ -387,15 +448,32 @@ public class XmlUtil {
 	 * @since 4.1.2
 	 */
 	public static DocumentBuilder createDocumentBuilder() {
-		final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		disableXXE(dbf);
 		DocumentBuilder builder;
 		try {
-			builder = dbf.newDocumentBuilder();
+			builder = createDocumentBuilderFactory().newDocumentBuilder();
 		} catch (Exception e) {
 			throw new UtilException(e, "Create xml document error!");
 		}
 		return builder;
+	}
+
+	/**
+	 * 创建{@link DocumentBuilderFactory}
+	 * <p>
+	 * 默认使用"com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl"<br>
+	 * 如果使用第三方实现，请调用{@link #disableDefaultDocumentBuilderFactory()}
+	 * </p>
+	 *
+	 * @return {@link DocumentBuilderFactory}
+	 */
+	public static DocumentBuilderFactory createDocumentBuilderFactory() {
+		final DocumentBuilderFactory factory;
+		if (StrUtil.isNotEmpty(defaultDocumentBuilderFactory)) {
+			factory = DocumentBuilderFactory.newInstance(defaultDocumentBuilderFactory, null);
+		} else {
+			factory = DocumentBuilderFactory.newInstance();
+		}
+		return disableXXE(factory);
 	}
 
 	/**
@@ -406,9 +484,21 @@ public class XmlUtil {
 	 * @return XML文档
 	 */
 	public static Document createXml(String rootElementName) {
-		final Document doc = createXml();
-		doc.appendChild(doc.createElement(rootElementName));
+		return createXml(rootElementName, null);
+	}
 
+	/**
+	 * 创建XML文档<br>
+	 * 创建的XML默认是utf8编码，修改编码的过程是在toStr和toFile方法里，即XML在转为文本的时候才定义编码
+	 *
+	 * @param rootElementName 根节点名称
+	 * @param namespace       命名空间，无则传null
+	 * @return XML文档
+	 * @since 5.0.4
+	 */
+	public static Document createXml(String rootElementName, String namespace) {
+		final Document doc = createXml();
+		doc.appendChild(null == namespace ? doc.createElement(rootElementName) : doc.createElementNS(rootElementName, namespace));
 		return doc;
 	}
 
@@ -640,30 +730,19 @@ public class XmlUtil {
 	 * @since 4.0.8
 	 */
 	public static String escape(String string) {
-		final StringBuilder sb = new StringBuilder(string.length());
-		for (int i = 0, length = string.length(); i < length; i++) {
-			char c = string.charAt(i);
-			switch (c) {
-				case '&':
-					sb.append("&amp;");
-					break;
-				case '<':
-					sb.append("&lt;");
-					break;
-				case '>':
-					sb.append("&gt;");
-					break;
-				case '"':
-					sb.append("&quot;");
-					break;
-				case '\'':
-					sb.append("&apos;");
-					break;
-				default:
-					sb.append(c);
-			}
-		}
-		return sb.toString();
+		return EscapeUtil.escape(string);
+	}
+
+	/**
+	 * 反转义XML特殊字符:
+	 *
+	 * @param string 被替换的字符串
+	 * @return 替换后的字符串
+	 * @see EscapeUtil#unescape(String)
+	 * @since 5.0.6
+	 */
+	public static String unescape(String string) {
+		return EscapeUtil.unescape(string);
 	}
 
 	/**
@@ -713,23 +792,73 @@ public class XmlUtil {
 	 * @return XML数据转换后的Map
 	 * @since 4.0.8
 	 */
+	@SuppressWarnings("unchecked")
 	public static Map<String, Object> xmlToMap(Node node, Map<String, Object> result) {
 		if (null == result) {
 			result = new HashMap<>();
 		}
-
 		final NodeList nodeList = node.getChildNodes();
 		final int length = nodeList.getLength();
 		Node childNode;
 		Element childEle;
 		for (int i = 0; i < length; ++i) {
 			childNode = nodeList.item(i);
-			if (isElement(childNode)) {
-				childEle = (Element) childNode;
-				result.put(childEle.getNodeName(), childEle.getTextContent());
+			if (false == isElement(childNode)) {
+				continue;
+			}
+
+			childEle = (Element) childNode;
+			final Object value = result.get(childEle.getNodeName());
+			Object newValue;
+			if (childEle.hasChildNodes()) {
+				// 子节点继续递归遍历
+				final Map<String, Object> map = xmlToMap(childEle);
+				if (MapUtil.isNotEmpty(map)) {
+					newValue = map;
+				} else{
+					newValue = childEle.getTextContent();
+				}
+			} else {
+				newValue = childEle.getTextContent();
+			}
+
+
+			if (null != newValue) {
+				if (null != value) {
+					if (value instanceof List) {
+						((List<Object>) value).add(newValue);
+					} else {
+						result.put(childEle.getNodeName(), CollUtil.newArrayList(value, newValue));
+					}
+				} else {
+					result.put(childEle.getNodeName(), newValue);
+				}
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * 将Map转换为XML格式的字符串
+	 *
+	 * @param data     Map类型数据
+	 * @return XML格式的字符串
+	 * @since 5.1.2
+	 */
+	public static String mapToXmlStr(Map<?, ?> data) {
+		return toStr(mapToXml(data, "xml"));
+	}
+
+	/**
+	 * 将Map转换为XML格式的字符串
+	 *
+	 * @param data               Map类型数据
+	 * @param omitXmlDeclaration 是否输出 xml Declaration
+	 * @return XML格式的字符串
+	 * @since 5.1.2
+	 */
+	public static String mapToXmlStr(Map<?, ?> data,boolean omitXmlDeclaration) {
+		return toStr(mapToXml(data, "xml"),CharsetUtil.UTF_8,false,omitXmlDeclaration);
 	}
 
 	/**
@@ -745,6 +874,64 @@ public class XmlUtil {
 	}
 
 	/**
+	 * 将Map转换为XML格式的字符串
+	 *
+	 * @param data      Map类型数据
+	 * @param rootName  根节点名
+	 * @param namespace 命名空间，可以为null
+	 * @return XML格式的字符串
+	 * @since 5.0.4
+	 */
+	public static String mapToXmlStr(Map<?, ?> data, String rootName, String namespace) {
+		return toStr(mapToXml(data, rootName, namespace));
+	}
+
+	/**
+	 * 将Map转换为XML格式的字符串
+	 *
+	 * @param data               Map类型数据
+	 * @param rootName           根节点名
+	 * @param namespace          命名空间，可以为null
+	 * @param omitXmlDeclaration 是否输出 xml Declaration
+	 * @return XML格式的字符串
+	 * @since 5.1.2
+	 */
+	public static String mapToXmlStr(Map<?, ?> data, String rootName, String namespace, boolean omitXmlDeclaration) {
+		return toStr(mapToXml(data, rootName, namespace), CharsetUtil.UTF_8, false, omitXmlDeclaration);
+	}
+
+	/**
+	 * 将Map转换为XML格式的字符串
+	 *
+	 * @param data               Map类型数据
+	 * @param rootName           根节点名
+	 * @param namespace          命名空间，可以为null
+	 * @param isPretty           是否格式化输出
+	 * @param omitXmlDeclaration 是否输出 xml Declaration
+	 * @return XML格式的字符串
+	 * @since 5.1.2
+	 */
+	public static String mapToXmlStr(Map<?, ?> data, String rootName, String namespace, boolean isPretty, boolean omitXmlDeclaration) {
+		return toStr(mapToXml(data, rootName, namespace), CharsetUtil.UTF_8, isPretty);
+	}
+
+	/**
+	 * 将Map转换为XML格式的字符串
+	 *
+	 * @param data               Map类型数据
+	 * @param rootName           根节点名
+	 * @param namespace          命名空间，可以为null
+	 * @param charset            编码
+	 * @param isPretty           是否格式化输出
+	 * @param omitXmlDeclaration 是否输出 xml Declaration
+	 * @return XML格式的字符串
+	 * @since 5.1.2
+	 */
+	public static String mapToXmlStr(Map<?, ?> data, String rootName, String namespace, String charset,boolean isPretty, boolean omitXmlDeclaration) {
+		return toStr(mapToXml(data, rootName, namespace), charset, isPretty, omitXmlDeclaration);
+	}
+
+	/**
 	 * 将Map转换为XML
 	 *
 	 * @param data     Map类型数据
@@ -753,8 +940,22 @@ public class XmlUtil {
 	 * @since 4.0.9
 	 */
 	public static Document mapToXml(Map<?, ?> data, String rootName) {
+
+		return mapToXml(data, rootName, null);
+	}
+
+	/**
+	 * 将Map转换为XML
+	 *
+	 * @param data      Map类型数据
+	 * @param rootName  根节点名
+	 * @param namespace 命名空间，可以为null
+	 * @return XML
+	 * @since 5.0.4
+	 */
+	public static Document mapToXml(Map<?, ?> data, String rootName, String namespace) {
 		final Document doc = createXml();
-		final Element root = appendChild(doc, rootName);
+		final Element root = appendChild(doc, rootName, namespace);
 
 		mapToXml(doc, root, data);
 		return doc;
@@ -780,8 +981,21 @@ public class XmlUtil {
 	 * @since 4.0.9
 	 */
 	public static Element appendChild(Node node, String tagName) {
-		Document doc = (node instanceof Document) ? (Document) node : node.getOwnerDocument();
-		Element child = doc.createElement(tagName);
+		return appendChild(node, tagName, null);
+	}
+
+	/**
+	 * 在已有节点上创建子节点
+	 *
+	 * @param node      节点
+	 * @param tagName   标签名
+	 * @param namespace 命名空间，无传null
+	 * @return 子节点
+	 * @since 5.0.4
+	 */
+	public static Element appendChild(Node node, String tagName, String namespace) {
+		final Document doc = (node instanceof Document) ? (Document) node : node.getOwnerDocument();
+		final Element child = (null == namespace) ? doc.createElement(tagName) : doc.createElementNS(namespace, tagName);
 		node.appendChild(child);
 		return child;
 	}
@@ -796,26 +1010,39 @@ public class XmlUtil {
 	 * @param data    Map类型数据
 	 * @since 4.0.8
 	 */
+	@SuppressWarnings("rawtypes")
 	private static void mapToXml(Document doc, Element element, Map<?, ?> data) {
 		Element filedEle;
 		Object key;
 		for (Entry<?, ?> entry : data.entrySet()) {
 			key = entry.getKey();
-			if (null != key) {
-				// key作为标签名
-				filedEle = doc.createElement(key.toString());
-				element.appendChild(filedEle);
-				final Object value = entry.getValue();
-				// value作为标签内的值。
-				if (null != value) {
-					if (value instanceof Map) {
+			if (null == key) {
+				continue;
+			}
+			// key作为标签名，无值的节点作为空节点创建
+			filedEle = doc.createElement(key.toString());
+			element.appendChild(filedEle);
+			// value作为标签内的值。
+			final Object value = entry.getValue();
+			if (null == value) {
+				continue;
+			}
+			if (value instanceof List) {
+				for (Object listEle : (List) value) {
+					if (listEle instanceof Map) {
 						// 如果值依旧为map，递归继续
-						mapToXml(doc, filedEle, (Map<?, ?>) value);
-						element.appendChild(filedEle);
+						mapToXml(doc, filedEle, (Map<?, ?>) listEle);
 					} else {
+						// 创建文本节点
 						filedEle.appendChild(doc.createTextNode(value.toString()));
 					}
 				}
+			} else if (value instanceof Map) {
+				// 如果值依旧为map，递归继续
+				mapToXml(doc, filedEle, (Map<?, ?>) value);
+			} else {
+				filedEle.appendChild(doc.createTextNode(value.toString()));
+
 			}
 		}
 	}
