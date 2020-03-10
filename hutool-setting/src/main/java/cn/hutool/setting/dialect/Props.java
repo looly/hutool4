@@ -536,7 +536,7 @@ public final class Props extends Properties implements BasicTypeGetter<String>, 
 	 * @since 4.6.3
 	 */
 	public <T> T fillBean(T bean, String prefix) {
-		prefix = StrUtil.addSuffixIfNot(prefix, StrUtil.DOT);
+		prefix = StrUtil.nullToEmpty(StrUtil.addSuffixIfNot(prefix, StrUtil.DOT));
 
 		String key;
 		for (java.util.Map.Entry<Object, Object> entry : this.entrySet()) {

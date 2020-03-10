@@ -7,6 +7,15 @@
 
 ### Bug修复
 * 【http   】     修复body方法添加多余头的问题（issue#769@Github）
+* 【setting】     修复Props.toBean方法null的问题
+* 【core   】     修复NetUtil.isUsableLocalPort()判断问题（issue#765@Github）
+* 【poi    】     修复ExcelWriter写出多个sheet错误的问题（issue#766@Github）
+* 【core   】     修复EscapeUtil.escape转义错误（issue#758@Github）
+* 【core   】     修复CombinationAnnotationElement数组判断问题（issue#752@Github）
+* 【core   】     修复log4j2使用debug行号打印问题（issue#I19NFJ@Github）
+* 【poi    】     修复sax读取excel03数组越界问题（issue#750@Github）
+* 【core   】     CharsetUtil在不支持GBK的系统中运行报错问题（issue#731@Github）
+* 【core   】     RandomUtil的randomEleSet方法顺序不随机的问题（pr#741@Github）
 
 -------------------------------------------------------------------------------------------------------------
 

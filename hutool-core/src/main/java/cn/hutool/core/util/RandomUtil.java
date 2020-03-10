@@ -1,19 +1,5 @@
 package cn.hutool.core.util;
 
-import java.awt.Color;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
@@ -22,6 +8,20 @@ import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.WeightRandom;
 import cn.hutool.core.lang.WeightRandom.WeightObj;
+
+import java.awt.Color;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 随机工具类
@@ -366,7 +366,7 @@ public class RandomUtil {
 			throw new IllegalArgumentException("Count is larger than collection distinct size !");
 		}
 
-		final HashSet<T> result = new HashSet<>(count);
+		final Set<T> result = new LinkedHashSet<>(count);
 		int limit = source.size();
 		while (result.size() < count) {
 			result.add(randomEle(source, limit));

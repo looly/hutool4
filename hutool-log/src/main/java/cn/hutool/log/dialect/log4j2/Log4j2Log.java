@@ -10,13 +10,13 @@ import cn.hutool.log.AbstractLog;
 
 /**
  * <a href="http://logging.apache.org/log4j/2.x/index.html">Apache Log4J 2</a> log.<br>
- * 
+ *
  * @author Looly
  *
  */
 public class Log4j2Log extends AbstractLog {
 	private static final long serialVersionUID = -6843151523380063975L;
-	
+
 	private final transient Logger logger;
 
 	// ------------------------------------------------------------------------- Constructor
@@ -52,11 +52,6 @@ public class Log4j2Log extends AbstractLog {
 	@Override
 	public boolean isDebugEnabled() {
 		return logger.isDebugEnabled();
-	}
-
-	@Override
-	public void debug(String format, Object... arguments) {
-		debug(null, format, arguments);
 	}
 
 	@Override
@@ -96,7 +91,7 @@ public class Log4j2Log extends AbstractLog {
 	public void error(String fqcn, Throwable t, String format, Object... arguments) {
 		logIfEnabled(fqcn, Level.ERROR, t, format, arguments);
 	}
-	
+
 	// ------------------------------------------------------------------------- Log
 	@Override
 	public void log(String fqcn, cn.hutool.log.level.Level level, Throwable t, String format, Object... arguments) {
@@ -127,7 +122,7 @@ public class Log4j2Log extends AbstractLog {
 	/**
 	 * 打印日志<br>
 	 * 此方法用于兼容底层日志实现，通过传入当前包装类名，以解决打印日志中行号错误问题
-	 * 
+	 *
 	 * @param fqcn 完全限定类名(Fully Qualified Class Name)，用于纠正定位错误行号
 	 * @param level 日志级别，使用org.apache.logging.log4j.Level中的常量
 	 * @param t 异常

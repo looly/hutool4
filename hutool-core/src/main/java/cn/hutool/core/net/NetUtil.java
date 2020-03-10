@@ -1,13 +1,25 @@
 package cn.hutool.core.net;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.UtilException;
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.lang.Filter;
+import cn.hutool.core.lang.Validator;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.DatagramSocket;
 import java.net.IDN;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
@@ -20,18 +32,6 @@ import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeSet;
-
-import javax.net.ServerSocketFactory;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.exceptions.UtilException;
-import cn.hutool.core.io.IORuntimeException;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.lang.Filter;
-import cn.hutool.core.lang.Validator;
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.StrUtil;
 
 /**
  * 网络相关工具
@@ -103,12 +103,21 @@ public class NetUtil {
 			// 给定的IP未在指定端口范围中
 			return false;
 		}
-		try {
-			ServerSocketFactory.getDefault().createServerSocket(port, 1, InetAddress.getByName(LOCAL_IP)).close();
-			return true;
-		} catch (Exception e) {
+
+		// issue#765@Github, 某些绑定非127.0.0.1的端口无法被检测到
+		try (ServerSocket ss = new ServerSocket(port)) {
+			ss.setReuseAddress(true);
+		} catch (IOException ignored) {
 			return false;
 		}
+
+		try (DatagramSocket ds = new DatagramSocket(port)) {
+			ds.setReuseAddress(true);
+		} catch (IOException ignored) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
