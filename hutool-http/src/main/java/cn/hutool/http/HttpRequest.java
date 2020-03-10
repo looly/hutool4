@@ -663,7 +663,6 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 		byte[] bytes = StrUtil.bytes(body, this.charset);
 		body(bytes);
 		this.form = null; // 当使用body时，停止form的使用
-		contentLength(bytes.length);
 
 		if (null != contentType) {
 			// Content-Type自定义设置
@@ -683,6 +682,7 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 		// 判断是否为rest请求
 		if (StrUtil.containsAnyIgnoreCase(contentType, "json", "xml")) {
 			this.isRest = true;
+			contentLength(bytes.length);
 		}
 		return this;
 	}
