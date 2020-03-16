@@ -253,12 +253,23 @@ public class TypeUtil {
 	 * @since 4.5.2
 	 */
 	public static ParameterizedType toParameterizedType(Type type) {
+		ParameterizedType result = null;
 		if (type instanceof ParameterizedType) {
-			return (ParameterizedType) type;
+			result = (ParameterizedType) type;
 		} else if (type instanceof Class) {
-			return toParameterizedType(((Class<?>) type).getGenericSuperclass());
+			final Class<?> clazz = (Class<?>) type;
+			Type genericSuper = clazz.getGenericSuperclass();
+			if(null == genericSuper || Object.class.equals(genericSuper)){
+				// 如果类没有父类，而是实现一些定义好的泛型接口，则取接口的Type
+				final Type[] genericInterfaces = clazz.getGenericInterfaces();
+				if(ArrayUtil.isNotEmpty(genericInterfaces)){
+					// 默认取第一个实现接口的泛型Type
+					genericSuper = genericInterfaces[0];
+				}
+			}
+			result = toParameterizedType(genericSuper);
 		}
-		return null;
+		return result;
 	}
 	
 	/**
