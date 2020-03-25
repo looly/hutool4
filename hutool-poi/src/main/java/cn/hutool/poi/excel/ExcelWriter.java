@@ -1,32 +1,5 @@
 package cn.hutool.poi.excel;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.poi.hssf.usermodel.DVConstraint;
-import org.apache.poi.hssf.usermodel.HSSFDataValidation;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.DataValidation;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HeaderFooter;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellRangeAddressList;
-import org.apache.poi.xssf.usermodel.XSSFDataValidationConstraint;
-import org.apache.poi.xssf.usermodel.XSSFDataValidationHelper;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.comparator.IndexedComparator;
@@ -41,6 +14,30 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
 import cn.hutool.poi.excel.cell.CellUtil;
 import cn.hutool.poi.excel.style.Align;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.DataValidationConstraint;
+import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HeaderFooter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.xssf.usermodel.XSSFDataValidation;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Excel 写入器<br>
@@ -564,21 +561,19 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 * @since 4.6.2
 	 */
 	public ExcelWriter addSelect(CellRangeAddressList regions, String... selectList) {
-		final DVConstraint constraint = DVConstraint.createExplicitListConstraint(selectList);
-		
-		// 绑定
-		DataValidation dataValidation;
-		
-		if(this.sheet instanceof XSSFSheet) {
-			final XSSFDataValidationHelper dvHelper = new XSSFDataValidationHelper((XSSFSheet)sheet);
-			final XSSFDataValidationConstraint dvConstraint = (XSSFDataValidationConstraint) dvHelper.createExplicitListConstraint(selectList);
-			dataValidation = dvHelper.createValidation(dvConstraint, regions);
-		} else {
-			dataValidation = new HSSFDataValidation(regions, constraint);
+		final DataValidationHelper validationHelper = this.sheet.getDataValidationHelper();
+		final DataValidationConstraint constraint = validationHelper.createExplicitListConstraint(selectList);
+
+		//设置下拉框数据
+		final DataValidation dataValidation = validationHelper.createValidation(constraint, regions);
+
+		//处理Excel兼容性问题
+		if(dataValidation instanceof XSSFDataValidation) {
+			dataValidation.setSuppressDropDownArrow(true);
+			dataValidation.setShowErrorBox(true);
+		}else {
+			dataValidation.setSuppressDropDownArrow(false);
 		}
-		
-		dataValidation.setSuppressDropDownArrow(true);
-		dataValidation.setShowErrorBox(true);
 		
 		return addValidationData(dataValidation);
 	}
