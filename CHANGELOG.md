@@ -9,6 +9,8 @@
 * 【core   】     修复TypeUtil无法获取泛型接口的泛型参数问题（issue#I1BRFI@Gitee）
 * 【core   】     修复BeanPath从Map取值为空的问题（issue#790@Github）
 * 【poi    】     修复xls文件下拉列表无效问题（issue#I1C79P@Gitee）
+* 【poi    】     修复使用Cglib代理问题（issue#I1C79P@Gitee）
+* 【core   】     修复DateUtil.weekCount跨年计算问题
 
 -------------------------------------------------------------------------------------------------------------
 
