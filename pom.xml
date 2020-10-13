@@ -42,7 +42,7 @@
 
 		<!-- versions -->
 		<compile.version>7</compile.version>
-		<junit.version>4.12</junit.version>
+		<junit.version>4.13.1</junit.version>
 	</properties>
 
 	<dependencies>
